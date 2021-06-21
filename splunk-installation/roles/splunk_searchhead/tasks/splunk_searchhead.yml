@@ -1,0 +1,50 @@
+---
+
+- name: Copying Splunk Secret from Deployer
+  copy:
+    src: "{{playbook_dir}}/roles/splunk_searchhead/files/splunk.secret"
+    dest: /opt/splunk/etc/auth/splunk.secret
+    owner: splunk
+    group: splunk
+    mode: '0400'
+
+- name: Comment encryption passkey
+  shell: sed -e '/pass4SymmKey/s/^/#/g' -i /opt/splunk/etc/system/local/server.conf
+
+- name: Comment ssl password
+  shell: sed -e '/sslPassword/s/^/#/g' -i /opt/splunk/etc/system/local/server.conf
+
+- name: Restart Splunkd
+  include_tasks: "{{playbook_dir}}/roles/splunk_common/tasks/splunk_service_restart.yml"
+
+
+- name: sleep for 30 seconds
+  wait_for: timeout=30
+
+- name: Initialize SHC cluster config
+  command: "{{ splunk.exec }} init shcluster-config -auth '{{ common.splunk_admin_user }}:{{ common.splunk_admin_pass }}' -mgmt_uri '{{ shc.cert_prefix }}://{{inventory_hostname}}:{{ shc.svc_port }}' -replication_port {{ shc.replication_port }} -replication_factor {{ shc.replication_factor }} -conf_deploy_fetch_url '{{ shc.cert_prefix }}://{{ shc.shc_deployer }}:{{ shc.svc_port }}' -secret '{{ shc.search_cluster_pass4SymmKey }}' -shcluster_label '{{ shc.shc_label }}'"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: task_result
+  changed_when: task_result.rc == 0
+  until: task_result.rc == 0
+  retries: "{{ shc.retry_num }}"
+  delay: 3
+
+- name: Restart Splunkd
+  include_tasks: "{{playbook_dir}}/roles/splunk_common/tasks/splunk_service_restart.yml"
+
+- name: Boostrap SHC captain
+  command: "{{ splunk.exec }} bootstrap shcluster-captain -servers_list '{% for sh in shc.shc_list %}{{ shc.cert_prefix }}://{{ sh }}:{{ shc.svc_port }}{% if not loop.last %},{% endif %}{% endfor %}' -auth '{{ common.splunk_admin_user }}:{{ common.splunk_admin_pass }}'"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  when: inventory_hostname in groups['splunk-searchhead'][0]
+  register: task_result
+  until: task_result.rc == 0 or "node seems to have already joined another cluster" in task_result.stderr
+  changed_when: task_result.rc == 0
+  failed_when: task_result.rc !=0 and "node seems to have already joined another cluster" not in task_result.stderr
+  retries: "{{ shc.retry_num }}"
+  delay: 3
+
+- name: sleep for 30 seconds
+  wait_for: timeout=30

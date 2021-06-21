@@ -1,0 +1,2 @@
+os_user: centos
+heat_template_path: k8s-stack.yaml

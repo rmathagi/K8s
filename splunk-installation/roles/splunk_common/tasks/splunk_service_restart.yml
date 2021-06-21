@@ -1,0 +1,10 @@
+---
+- name: Restart Splunkd Service
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: splunkd
+  tags: shc
+
+- name: sleep for 20 seconds
+  wait_for: timeout=20

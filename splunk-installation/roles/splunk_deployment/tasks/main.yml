@@ -1,0 +1,4 @@
+---
+# tasks file for splunk_deployment
+- name: Running on Splunk Deployment Servers
+  include_tasks: splunk_deployment.yml

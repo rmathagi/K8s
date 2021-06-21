@@ -1,0 +1,4 @@
+---
+# tasks file for splunk_com
+- name: Running on Splunk UF
+  include_tasks: splunk_uf.yml

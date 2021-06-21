@@ -1,0 +1,42 @@
+---
+- name: Stop Splunkd Service
+  systemd:
+    state: stopped
+    name: splunkd
+
+- name: Sleep for 40 seconds
+  wait_for: timeout=40
+
+- name: Get Splunk status
+  command: "{{ splunk.exec }} status --accept-license --answer-yes --no-prompt"
+
+- name: Delete 1.0 Deployment Client Config
+  file:
+    path: "{{ item }}"
+    state: absent
+  with_items:
+    - /opt/splunk/etc/system/local/deploymentclient.conf
+    - /opt/splunk/etc/apps/splunk_emea_all_deploymentclient
+    - /opt/splunk/etc/apps/splunk_all_deploymentclient
+
+- name: Copying Default Deployment Client app for AMER
+  copy:
+    src: "{{playbook_dir}}/roles/splunk_heavy_forwarders/files/splunk_amer_default_deploymentclient"
+    dest: /opt/splunk/etc/apps
+    owner: splunk
+    group: splunk
+    mode: '0644'
+
+- name: Copying Deploymentclient config for AMER
+  template:
+    src: "{{playbook_dir}}/roles/splunk_heavy_forwarders/templates/splunk_default_deploymentclient_conf_amer.j2"
+    dest: /opt/splunk/etc/apps/splunk_amer_default_deploymentclient/default/deploymentclient.conf
+    owner: splunk
+    group: splunk
+  when: inventory_hostname in groups['splunk-amer-universalforwarders']
+
+- name: Start Splunkd Service
+  systemd:
+    state: started
+    name: splunkd
+

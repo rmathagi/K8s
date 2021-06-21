@@ -1,0 +1,4 @@
+---
+# tasks file for splunk_common
+- name: Running on Splunk Searchhead
+  include_tasks: splunk_searchhead.yml

@@ -1,0 +1,14 @@
+# 'searchhead' mode is the only mode supporting a comma-separated list of
+# master_uris.
+[clustering]
+mode = searchhead
+master_uri = clustermaster:one
+
+[clustermaster:one]
+master_uri=https://{{ master.cluster_master }}:8089
+pass4SymmKey = {{ common.indexer_cluster_pass4SymmKey }}
+# Splunk will toss a harmless warning message unless this is explicitly set to the correct value.
+multisite = true
+
+[general]
+site = site0

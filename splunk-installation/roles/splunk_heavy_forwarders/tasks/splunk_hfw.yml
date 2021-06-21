@@ -1,0 +1,54 @@
+---
+- name: Copying Default Deployment Client app for EMEA
+  copy:
+    src: "{{playbook_dir}}/roles/splunk_heavy_forwarders/files/splunk_emea_default_deploymentclient"
+    dest: /opt/splunk/etc/apps
+    owner: splunk
+    group: splunk
+    mode: '0644'
+  when: inventory_hostname in groups['splunk-emea-heavyforwarders']
+
+- name: Copying Default Deployment Client app for AMER
+  copy:
+    src: "{{playbook_dir}}/roles/splunk_heavy_forwarders/files/splunk_amer_default_deploymentclient"
+    dest: /opt/splunk/etc/apps
+    owner: splunk
+    group: splunk
+    mode: '0644'
+  when: inventory_hostname in groups['splunk-amer-heavyforwarders']
+
+- name: Copying Default Deployment Client app for APAC
+  copy:
+    src: "{{playbook_dir}}/roles/splunk_heavy_forwarders/files/splunk_apac_default_deploymentclient"
+    dest: /opt/splunk/etc/apps
+    owner: splunk
+    group: splunk
+    mode: '0644'
+  when: inventory_hostname in groups['splunk-apac-heavyforwarders']
+
+- name: Copying Deploymentclient config for EMEA
+  template:
+    src: "{{playbook_dir}}/roles/splunk_heavy_forwarders/templates/splunk_default_deploymentclient_conf_emea.j2"
+    dest: /opt/splunk/etc/apps/splunk_emea_default_deploymentclient/default/deploymentclient.conf
+    owner: splunk
+    group: splunk
+  when: inventory_hostname in groups['splunk-emea-heavyforwarders']
+
+- name: Copying Deploymentclient config for AMER
+  template:
+    src: "{{playbook_dir}}/roles/splunk_heavy_forwarders/templates/splunk_default_deploymentclient_conf_amer.j2"
+    dest: /opt/splunk/etc/apps/splunk_amer_default_deploymentclient/default/deploymentclient.conf
+    owner: splunk
+    group: splunk
+  when: inventory_hostname in groups['splunk-amer-heavyforwarders']
+
+- name: Copying Deploymentclient config for APAC
+  template:
+    src: "{{playbook_dir}}/roles/splunk_heavy_forwarders/templates/splunk_default_deploymentclient_conf_apac.j2"
+    dest: /opt/splunk/etc/apps/splunk_apac_default_deploymentclient/default/deploymentclient.conf
+    owner: splunk
+    group: splunk
+  when: inventory_hostname in groups['splunk-apac-heavyforwarders']
+
+- name: Restart Splunkd
+  include_tasks: "{{playbook_dir}}/roles/splunk_common/tasks/splunk_service_restart.yml"

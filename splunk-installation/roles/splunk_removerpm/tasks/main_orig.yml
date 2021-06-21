@@ -1,0 +1,41 @@
+---
+- name: Stop Splunkd Service
+  systemd:
+    state: stopped
+    name: splunkd
+    enabled: no
+
+- name: Disable Splunk service via boot-start"
+  command: /opt/splunk/bin/splunk disable boot-start
+
+- name: Remove file (delete file)
+  file:
+    path: /etc/systemd/system/splunkd.service
+    state: absent
+
+- name: Remove initd file (delete file)
+  file:
+    path: /etc/init.d/splunkd
+    state: absent
+
+- name: kill splunk
+  shell: pkill splunk
+
+- name: sleep for 20 seconds
+  wait_for: timeout=20
+
+- name: remove splunk packages
+  yum:
+    name: splunk-7.3.2-c60db69f8e32.x86_64
+    state: absent
+
+- name: remove splunk directory
+  shell: rm -rf /opt/splunk/*
+
+#- name: Remove Splunk Directory 
+#  file:
+#    path: /opt/splunk/
+#    state: absent
+
+- name: daemon reload
+  shell: systemctl daemon-reload

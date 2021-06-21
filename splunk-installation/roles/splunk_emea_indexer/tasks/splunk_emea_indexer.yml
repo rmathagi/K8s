@@ -1,0 +1,44 @@
+---
+
+# This task should be removed in prod deployment
+- name: Create Indexer Partitions
+  file:
+    path: "/{{item}}"
+    owner: splunk
+    group: splunk
+    mode: 0755
+    recurse: yes
+    state: directory
+  with_items: ["splunk_storage", "splunk_storage/hot", "splunk_storage/cold", "splunk_storage/dma"]
+
+- name: Copying Indexer Apps
+  copy:
+    src: "{{playbook_dir}}/roles/splunk_emea_indexer/files/"
+    dest: /opt/splunk/etc/apps/
+    owner: splunk
+    group: splunk
+    mode: '0644'
+
+- name: Copying Cluster Base Server Config
+  template:
+    src: "{{playbook_dir}}/roles/splunk_emea_indexer/templates/splunk_cluster_indexer_base_server.j2"
+    dest: /opt/splunk/etc/apps/splunk_cluster_indexer_base/local/server.conf
+    owner: splunk
+    group: splunk
+
+- name: Copying Cluster Base input Config
+  template:
+    src: "{{playbook_dir}}/roles/splunk_emea_indexer/templates/splunk_cluster_indexer_base_inputs.j2"
+    dest: /opt/splunk/etc/apps/splunk_cluster_indexer_base/local/inputs.conf
+    owner: splunk
+    group: splunk
+
+- name: Copying Site Base Config
+  template:
+    src: "{{playbook_dir}}/roles/splunk_emea_indexer/templates/splunk_site1_indexer_base_server.j2"
+    dest: /opt/splunk/etc/apps/splunk_site1_indexer_base/local/server.conf
+    owner: splunk
+    group: splunk
+
+- name: Restart Splunkd
+  include_tasks: "{{playbook_dir}}/roles/splunk_common/tasks/splunk_service_restart.yml"

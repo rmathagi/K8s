@@ -1,0 +1,18 @@
+---
+- name: Copying License App
+  copy:
+    src: "{{playbook_dir}}/roles/splunk_stream_searchhead/files/"
+    dest: /opt/splunk/etc/apps
+    owner: splunk
+    group: splunk
+    mode: '0644'
+
+- name: Copying License Config
+  template:
+    src: "{{playbook_dir}}/roles/splunk_common/templates/splunk_all_license_server.j2"
+    dest: /opt/splunk/etc/apps/splunk_all_license/local/server.conf
+    owner: splunk
+    group: splunk
+
+- name: Restart Splunkd
+  include_tasks: "{{playbook_dir}}/roles/splunk_common/tasks/splunk_service_restart.yml"

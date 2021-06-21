@@ -1,0 +1,42 @@
+---
+#splunk hard core 0
+- pam_limits:
+    domain: splunk
+    limit_type: hard
+    limit_item: core
+    value: 0
+
+#splunk hard maxlogins 10
+- pam_limits:
+    domain: splunk
+    limit_type: hard
+    limit_item: maxlogins
+    value: 10
+
+#splunk soft|hard nofile 65535
+- pam_limits:
+    domain: splunk
+    limit_type: '-'
+    limit_item: nofile
+    value: 65535
+
+#splunk soft|hard nproc 20480
+- pam_limits:
+    domain: splunk
+    limit_type: '-'
+    limit_item: nproc
+    value: 20480
+
+#splunk soft|hard fsize unlimited
+- pam_limits:
+    domain: splunk
+    limit_type: '-'
+    limit_item: core
+    value: unlimited
+
+#splunk signal pending
+- pam_limits:
+    domain: splunk
+    limit_type: '-'
+    limit_item: sigpending
+    value: 16000

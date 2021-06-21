@@ -1,0 +1,63 @@
+# MULTI-SITE VERSION
+
+# The Cluster Master acts as a search head for the associated indexers. If the
+# multi-site option is set (the whole point of this configuration app), then
+# the master will need to declare what site it is a part of. Without this, it
+# will emit warning messages in the UI.
+[general]
+site = {{ master.site }}
+
+# The master's clustering configuration sets the default values for
+# replication factor and search factor. The replication factor setting here
+# couples with the 'repFactor = auto' setting on an index. When the index's
+# repFactor is auto (rather than a number), the default replication_factor set
+# by the master sets the number of replicated copies for that index.
+
+[clustering]
+mode = master
+
+# The master and its cluster members must agree on this setting.
+pass4SymmKey = {{ common.indexer_cluster_pass4SymmKey }}
+
+# When you turn this on, any site IDs mapped in the site_replication_factor
+# and/or site_search_factor must exist in server.conf entries of the indexers
+# in that site.
+multisite = true
+
+
+# When multisite is true, the list of available sites must be provided
+# here:
+# Site1 EMEA
+# Site2 AMER
+# Site31 APAC1
+# Site32 APAC2
+available_sites = site1, site2
+cluster_label = splunk_cluster
+
+# This determines where copies go in a multi-site setup. Two special keywords
+# exist: "origin", reflecting the site in which the data bucket originated,
+# and "total" representing the required total number of replica copies.
+# It is also possible to mention specific sites (e.g. "site13" as a backup for 
+# everything). When site-specific counts are enumerated, the value of the
+# "total" keyword serves as a lower bound--the total number of copies will
+# be the sum of the number of copies from origin: or per-site keywords, 
+# adding extra copies to reach the total if required.
+# Note: the "origin" and "total" keywords must be supplied for the policy
+# to be considered valid.
+# (Default: origin:2, total:3)
+
+site_replication_factor = origin:2, total:3
+
+# In order to achieve "site affinity", where search heads access local
+# (in-site) indexers even for data from remote sites, there must be a
+# searchable copy of the data from the remote site in the local site. For
+# example: site1 is the "primary" site with the search heads, and sites 2 and
+# 3 are remote sites, the policy must include a searchable copy in site1
+# explicitly in order to achieve search affinity in site 1.
+# Example ensuring the backup site also has a searchable copy:
+# (and in this case, there would only need to be those two searchable copies
+# to meet the total searchable)
+site_search_factor = origin:1, total:2
+
+[indexer_discovery]
+pass4SymmKey = {{ master.indexer_discovery_pass4SymmKey }}

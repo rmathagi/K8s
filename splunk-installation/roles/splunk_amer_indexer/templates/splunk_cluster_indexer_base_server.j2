@@ -1,0 +1,17 @@
+[clustering]
+mode = slave
+master_uri = https://{{ master.cluster_master }}:8089
+
+pass4SymmKey = {{ common.indexer_cluster_pass4SymmKey }}
+
+# Provide a port on which the peers can chat.
+[replication_port://8080]
+disabled = false
+
+#[replication_port-ssl://8080]
+#disabled = false
+#rootCA = $SPLUNK_HOME/etc/auth/cacert.pem
+#serverCert = $SPLUNK_HOME/etc/auth/server.pem
+#password = common.ssl_cert_pass
+#requireClientCert = false
+#compressed = true

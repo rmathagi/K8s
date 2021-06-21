@@ -1,0 +1,26 @@
+---
+
+- name: Copying SearchHead Apps
+  copy:
+    src: "{{playbook_dir}}/roles/splunk_deployer/pre/files/"
+    dest: /opt/splunk/etc/apps/
+    owner: splunk
+    group: splunk
+    mode: '0644'
+
+- name: Copying Search Base Config
+  template:
+    src: "{{playbook_dir}}/roles/splunk_deployer/pre/templates/splunk_cluster_search_deployer_base_server.j2"
+    dest: /opt/splunk/etc/apps/splunk_cluster_search_deployer_base/local/server.conf
+    owner: splunk
+    group: splunk
+
+- name: Restart Splunkd
+  include_tasks: "{{playbook_dir}}/roles/splunk_common/tasks/splunk_service_restart.yml"
+
+- name: Fetch splunk.secret file
+  fetch:
+    src: /opt/splunk/etc/auth/splunk.secret
+    dest: "{{playbook_dir}}/roles/splunk_searchhead/files/splunk.secret"
+    flat: yes
+

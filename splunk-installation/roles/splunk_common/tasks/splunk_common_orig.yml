@@ -1,0 +1,138 @@
+---
+- name: Set UTC timezone
+  timezone: name=Etc/UTC
+
+- name: Copying Splunk Master binary
+  copy:
+    src: ../files/splunk-7.3.2-c60db69f8e32-linux-2.6-x86_64.rpm
+    dest: /opt/splunk-7.3.2-c60db69f8e32-linux-2.6-x86_64.rpm
+
+- name: Install splunk master binary
+  yum:
+    name: /opt/splunk-7.3.2-c60db69f8e32-linux-2.6-x86_64.rpm
+    state: present
+
+- name: Adding Seed credentials
+  template:
+    src: ../templates/user-seed.conf.j2
+    dest: /opt/splunk/etc/system/local/user-seed.conf
+    owner: splunk
+    group: splunk
+
+- name: Check for Splunk systemd script    
+  stat: path=/etc/systemd/system/Splunkd.service
+  register: S
+
+- name: Check for splunk systemd script
+  stat: path=/etc/systemd/system/splunkd.service
+  register: s
+
+- name: Stopping Splunkforwarder
+  shell: /etc/init.d/splunk stop
+
+- name: sleep for 40 seconds
+  wait_for: timeout=40
+
+- name: Disabling Splunkforwarder 
+  shell: chkconfig splunk off
+
+- name: Removing splunkforwarder startup script
+  shell: rm -rf /etc/init.d/splunk
+
+- name: Removing splunkforwarder startup script
+  shell: rm -rf /opt/splunkforwarder/*
+
+- name: Enable Splunk service via boot-start"
+  command: "{{ splunk.exec }} enable boot-start -systemd-managed 1 -user {{ splunk.user }} --accept-license --answer-yes --no-prompt"
+  when:
+    - not S.stat.exists
+    - not s.stat.exists
+
+- name: Rename Splunkd service file
+  command: mv /etc/systemd/system/Splunkd.service /etc/systemd/system/splunkd.service
+  when: not s.stat.exists
+
+#- name: checking for ULimits
+#  shell: grep -c LimitCORE /etc/systemd/system/splunkd.service
+#  register: test_ulimit
+
+- name: Setting ULimits
+  blockinfile:
+    path: /etc/systemd/system/splunkd.service
+    insertafter: 'User=splunk'
+    state: present
+    block: |
+      LimitCORE=0
+      LimitNOFILE=65535
+      LimitNPROC=20480
+      LimitFSIZE=infinity
+#  when: test_ulimit.stdout == "0"
+
+#- name: Setting ULimits
+#  include_tasks: "{{playbook_dir}}/roles/splunk_common/tasks/ulimts.yml"
+
+- name: insert/update "Match User" configuration block in /etc/rc.d/rc.local
+  blockinfile:
+    path: /etc/rc.d/rc.local
+    block: |
+      #SPLUNK: disable THP at boot time
+      THP=`find /sys/kernel/mm/ -name transparent_hugepage -type d | tail -n 1`
+      for SETTING in "enabled" "defrag";do
+      if test -f ${THP}/${SETTING}; then
+      echo never > ${THP}/${SETTING}
+      fi
+      done
+
+- name: Changing perm of "/etc/rc.d/rc.local", adding "+x"
+  file: dest=/etc/rc.d/rc.local mode=a+x
+
+- name: restart rc-local
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: rc-local
+
+- name: Copying Timestamp yml
+  template:
+    src: "{{playbook_dir}}/roles/splunk_common/files/datetime.xml"
+    dest: /opt/splunk/etc/
+    owner: splunk
+    group: splunk
+    mode: '0444'
+
+- name: Copying Manifest yml
+  template:
+    src: "{{playbook_dir}}/roles/splunk_common/files/splunk-7.3.2-c60db69f8e32-linux-2.6-x86_64-manifest"
+    dest: /opt/splunk/
+    owner: splunk
+    group: splunk
+    mode: '0444'
+
+- name:  service splunkd and ensure it is not masked
+  systemd: state=restarted name=splunkd enabled=yes
+
+- name: Delete old Splunkd Service
+  file:
+    path: /etc/systemd/system/multi-user.target.wants/Splunkd.service
+    state: absent
+
+#- block:
+#    - name: disable kernel.mm.transparent_hugepage/enabled
+#      lineinfile: dest=/etc/rc.local line="echo never > /sys/kernel/mm/transparent_hugepage/enabled" insertbefore="exit 0"
+#
+#    - name: disable kernel.mm.transparent_hugepage/defrag
+#      lineinfile: dest=/etc/rc.local line="echo never > /sys/kernel/mm/transparent_hugepage/defrag" insertbefore="exit 0"
+#
+#- block:
+#    - name: Transfer systemd script
+#      copy: src=../files/splunkd.service dest=/etc/systemd/system/ mode=0644
+#
+#    - name: Transfer startup script
+#      copy: src=../files/splunk.sh dest=/usr/local/sbin/ mode=0755
+#
+#    - name: enable service splunkd and ensure it is not masked
+#      systemd:
+#        name: splunkd
+#        enabled: yes
+#        masked: no
+...

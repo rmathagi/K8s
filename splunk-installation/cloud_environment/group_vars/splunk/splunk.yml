@@ -1,0 +1,62 @@
+---
+shc_string: "splunk-searchhead"
+deployer_string: "splunk-deployer"
+es_shc_string: "splunk-searchhead-es"
+es_deployer_string: "splunk-deployer-es"
+license_string: "splunk-license"
+master_string: "splunk-master"
+#indexers_string: "splunk-indexers"
+emea_indexers_string: "splunk-emea-indexers"
+amer_indexers_string: "splunk-amer-indexers"
+emea_deployment_string: "splunk-emea-deployment"
+amer_deployment_string: "splunk-amer-deployment"
+
+splunk:
+  user: "splunk"
+  group: "splunk"
+  opt: "/opt"
+  home: "/opt/splunk"
+  exec: "/opt/splunk/bin/splunk"
+
+common:
+  splunk_admin_user: 'splunkadmin'
+  splunk_admin_pass: 'Splunk_123'
+  indexer_cluster_pass4SymmKey: 'IdxCluster#789'
+  license_master: "{{ hostvars[inventory_hostname]['groups'][license_string][0] }}"
+  ssl_cert_pass: 'Splunk_123'
+
+master:
+#Cluster master should be edited during prod deployment
+  cluster_master: "{{ hostvars[inventory_hostname]['groups'][master_string][0] }}"
+  site: site1
+  indexer_discovery_pass4SymmKey: 'Ind3x3rD1sc0v3ry'
+  #indexers_list: "{{ hostvars[inventory_hostname]['groups'][indexers_string] | sort }}"
+  emea_indexers_list: "{{ hostvars[inventory_hostname]['groups'][emea_indexers_string] | sort }}"
+  amer_indexers_list: "{{ hostvars[inventory_hostname]['groups'][amer_indexers_string] | sort }}"
+  retry_num: 10
+  hot_storage: '/splunk_storage/hot'
+  cold_storage: '/splunk_storage/cold'
+  dma_storage: '/splunk_storage/dma'
+
+shc:
+  cert_prefix: https
+  svc_port: 8089
+  replication_port: 8181
+  replication_factor: 3
+  search_cluster_pass4SymmKey: 'ShcCluster#789'
+  retry_num: 10
+  shc_label: shc_cluster
+  shc_captain: "{{ hostvars[inventory_hostname]['groups'][shc_string][0] }}"
+  shc_list: "{{ hostvars[inventory_hostname]['groups'][shc_string] | sort }}"
+  shc_deployer: "{{ hostvars[inventory_hostname]['groups'][deployer_string][0] }}"
+  es_shc_label: shc_cluster_es
+  es_shc_captain: "{{ hostvars[inventory_hostname]['groups'][es_shc_string][0] }}"
+  es_shc_list: "{{ hostvars[inventory_hostname]['groups'][es_shc_string] | sort }}"
+  es_shc_deployer: "{{ hostvars[inventory_hostname]['groups'][es_deployer_string][0] }}"
+
+deployment:
+  emea: "{{ hostvars[inventory_hostname]['groups'][emea_deployment_string][0] }}"
+  amer: "{{ hostvars[inventory_hostname]['groups'][amer_deployment_string][0] }}"
+
+license:
+  file: "/opt/splunk/etc/licenses/enterprise/enterprise.lic"

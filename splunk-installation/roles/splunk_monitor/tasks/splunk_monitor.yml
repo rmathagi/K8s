@@ -1,0 +1,78 @@
+---
+
+- name: sleep for 60 seconds
+  wait_for: timeout=60
+
+- name: Copying Apps
+  copy:
+    src: "{{playbook_dir}}/roles/splunk_monitor/files/"
+    dest: /opt/splunk/etc/apps
+    owner: splunk
+    group: splunk
+    mode: '0644'
+
+- name: Restart Splunkd
+  include_tasks: "{{playbook_dir}}/roles/splunk_common/tasks/splunk_service_restart.yml"
+
+- name: Create License Enterprise Directory
+  file:
+    path: "/opt/splunk/etc/licenses/enterprise/"
+    owner: splunk
+    group: splunk
+    mode: 0755
+    recurse: yes
+    state: directory
+
+- name: Copying Splunk License
+  template:
+    src: "{{playbook_dir}}/roles/splunk_monitor/templates/enterprise.lic"
+    dest: /opt/splunk/etc/licenses/enterprise/enterprise.lic
+    owner: splunk
+    group: splunk
+
+- name: Apply Splunk license
+  command: "{{ splunk.exec }} add licenses {{ license.file }} -auth {{ common.splunk_admin_user }}:{{ common.splunk_admin_pass }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- name: Restart Splunkd
+  include_tasks: "{{playbook_dir}}/roles/splunk_common/tasks/splunk_service_restart.yml"
+
+- name: Set all indexers as search peers
+  command: "{{ splunk.exec }} add search-server {{ shc.cert_prefix }}://{{ item }}:{{ shc.svc_port }} -auth {{ common.splunk_admin_user }}:{{ common.splunk_admin_pass }} -remoteUsername {{ common.splunk_admin_user }} -remotePassword {{ common.splunk_admin_pass }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  with_items: "{{ [groups['splunk-emea-indexers'], groups['splunk-amer-indexers']] }}"
+  register: set_indexer_as_peer
+  until: set_indexer_as_peer.rc == 0
+  retries: "{{ shc.retry_num }}"
+  delay: 3
+  changed_when: set_indexer_as_peer.rc == 0
+  failed_when: set_indexer_as_peer.rc != 0 and 'already exists' not in set_indexer_as_peer.stderr
+
+- name: Set all search heads as search peers
+  command: "{{ splunk.exec }} add search-server {{ shc.cert_prefix }}://{{ item }}:{{ shc.svc_port }} -auth {{ common.splunk_admin_user }}:{{ common.splunk_admin_pass }} -remoteUsername {{ common.splunk_admin_user }} -remotePassword {{ common.splunk_admin_pass }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  with_items: "{{ [groups['splunk-searchhead']] }}"
+  register: set_indexer_as_peer
+  until: set_indexer_as_peer.rc == 0
+  retries: "{{ shc.retry_num }}"
+  delay: 3
+  changed_when: set_indexer_as_peer.rc == 0
+  failed_when: set_indexer_as_peer.rc != 0 and 'already exists' not in set_indexer_as_peer.stderr
+
+- name: Set Cluster Master and Deployers as search peers
+  command: "{{ splunk.exec }} add search-server {{ shc.cert_prefix }}://{{ item }}:{{ shc.svc_port }} -auth {{ common.splunk_admin_user }}:{{ common.splunk_admin_pass }} -remoteUsername {{ common.splunk_admin_user }} -remotePassword {{ common.splunk_admin_pass }}"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  with_items: "{{ [groups['splunk-deployer'], groups['splunk-master'], groups['splunk-deployment']] }}"
+  register: set_indexer_as_peer
+  until: set_indexer_as_peer.rc == 0
+  retries: "{{ shc.retry_num }}"
+  delay: 3
+  changed_when: set_indexer_as_peer.rc == 0
+  failed_when: set_indexer_as_peer.rc != 0 and 'already exists' not in set_indexer_as_peer.stderr
+
+- name: Restart Splunkd
+  include_tasks: "{{playbook_dir}}/roles/splunk_common/tasks/splunk_service_restart.yml"

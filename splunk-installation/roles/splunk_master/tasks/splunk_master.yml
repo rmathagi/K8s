@@ -1,0 +1,68 @@
+---
+
+- name: Copying General Apps
+  copy:
+    src: "{{playbook_dir}}/roles/splunk_master/files/apps"
+    dest: /opt/splunk/etc/
+    owner: splunk
+    group: splunk
+    mode: '0644'
+
+- name: Copying Master Apps
+  copy:
+    src: "{{playbook_dir}}/roles/splunk_master/files/master-apps"
+    dest: /opt/splunk/etc/
+    owner: splunk
+    group: splunk
+    mode: '0644'
+
+- name: Copying Master Base Config
+  template:
+    src: "{{playbook_dir}}/roles/splunk_master/templates/splunk_multisite_master_base_server.j2"
+    dest: /opt/splunk/etc/apps/splunk_multisite_master_base/local/server.conf
+    owner: splunk
+    group: splunk
+
+- name: Copying License Config
+  template:
+    src: "{{playbook_dir}}/roles/splunk_common/templates/splunk_all_license_server.j2"
+    dest: /opt/splunk/etc/master-apps/splunk_all_license/local/server.conf
+    owner: splunk
+    group: splunk
+
+- name: Restart Splunkd
+  include_tasks: "{{playbook_dir}}/roles/splunk_common/tasks/splunk_service_restart.yml"
+
+- name: Apply cluster bundle
+  command: "{{ splunk.exec }} apply cluster-bundle -auth {{ common.splunk_admin_user }}:{{ common.splunk_admin_pass }} --skip-validation --answer-yes"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: splunk_cluster_bundle_result
+  failed_when: >
+    ((splunk_cluster_bundle_result.stdout is not search("[Aa]pply"))
+      or ("bundle" not in splunk_cluster_bundle_result.stdout)
+      or (splunk_cluster_bundle_result.stdout is search("[Ee]rror")))
+    and ("already" not in splunk_cluster_bundle_result.stderr)
+  changed_when: >
+    ((splunk_cluster_bundle_result.stdout is search("[Aa]pply"))
+      and ("bundle" in splunk_cluster_bundle_result.stdout)
+      and (splunk_cluster_bundle_result.stdout is not search("[Ee]rror")))
+    and ("already" not in splunk_cluster_bundle_result.stderr)
+  retries: "{{ master.retry_num }}" # We will sometimes see this if the number of peers dictacted by the replication factor aren't up
+  delay: 5
+
+- name: Wait for bundle push
+  command: "{{ splunk.exec }} show cluster-bundle-status -auth {{ common.splunk_admin_user }}:{{ common.splunk_admin_pass }}"
+  register: cluster_bundle_status
+  until: cluster_bundle_status.stdout.find("cluster_status=None") != -1
+  retries: "{{ master.retry_num }}"
+  changed_when: cluster_bundle_status.rc == 0
+  delay: 5
+  ignore_errors: true
+  become: yes
+  become_user: "{{ splunk.user }}"
+
+- debug:
+    msg: "WARNING: Indexer bundle push still in progress - proceeding anyways..."
+  when:
+    - cluster_bundle_status.stdout.find("cluster_status=Rolling restart of the peers is in progress")!=-1

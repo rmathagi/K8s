@@ -1,0 +1,12 @@
+[Unit]
+Description=Splunk Enterprise Startup Script
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/splunk.sh start
+ExecStop=/usr/local/sbin/splunk.sh stop
+TimeoutStartSec=0
+
+[Install]
+WantedBy=default.target

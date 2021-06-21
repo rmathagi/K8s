@@ -1,0 +1,44 @@
+---
+
+- name: Copying General Apps
+  copy:
+    src: "{{playbook_dir}}/roles/splunk_deployment/files/apps"
+    dest: /opt/splunk/etc/
+    owner: splunk
+    group: splunk
+    mode: '0644'
+
+- name: Copying Deployment Apps
+  copy:
+    src: "{{playbook_dir}}/roles/splunk_deployment/files/deployment-apps"
+    dest: /opt/splunk/etc/
+    owner: splunk
+    group: splunk
+    mode: '0644'
+
+- name: Copying Deploymentclient config for EMEA
+  template:
+    src: "{{playbook_dir}}/roles/splunk_deployment/templates/splunk_local_deploymentclient_conf_emea.j2"
+    dest: /opt/splunk/etc/deployment-apps/splunk_local_deploymentclient/local/deploymentclient.conf
+    owner: splunk
+    group: splunk
+  when: inventory_hostname in groups['splunk-emea-deployment']
+
+- name: Copying Deploymentclient config for AMER
+  template:
+    src: "{{playbook_dir}}/roles/splunk_deployment/templates/splunk_local_deploymentclient_conf_amer.j2"
+    dest: /opt/splunk/etc/deployment-apps/splunk_local_deploymentclient/local/deploymentclient.conf
+    owner: splunk
+    group: splunk
+  when: inventory_hostname in groups['splunk-amer-deployment']
+
+- name: Copying Deploymentclient config for APAC
+  template:
+    src: "{{playbook_dir}}/roles/splunk_deployment/templates/splunk_local_deploymentclient_conf_apac.j2"
+    dest: /opt/splunk/etc/deployment-apps/splunk_local_deploymentclient/local/deploymentclient.conf
+    owner: splunk
+    group: splunk
+  when: inventory_hostname in groups['splunk-apac-deployment']
+
+- name: Restart Splunkd
+  include_tasks: "{{playbook_dir}}/roles/splunk_common/tasks/splunk_service_restart.yml"

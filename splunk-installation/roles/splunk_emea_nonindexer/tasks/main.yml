@@ -1,0 +1,4 @@
+---
+# tasks file for splunk_common
+- name: Running on Splunk EMEA Non Indexers
+  include_tasks: splunk_emea_nonindexer.yml

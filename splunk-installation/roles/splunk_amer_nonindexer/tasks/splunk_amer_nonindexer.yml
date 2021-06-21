@@ -1,0 +1,57 @@
+---
+- name: Check for Local Path for forwarder outputs
+  stat: path=/opt/splunk/etc/apps/splunk_cluster_forwarder_outputs/local/
+  register: P
+
+- name: Create Local Path
+  file:
+    path: /opt/splunk/etc/apps/splunk_cluster_forwarder_outputs/local/
+    owner: splunk
+    group: splunk
+    mode: 0755
+    recurse: yes
+    state: directory
+  when:
+    - not P.stat.exists
+
+- name: Copying AMER Forwarder Outputs Config
+  template:
+    src: "{{playbook_dir}}/roles/splunk_amer_nonindexer/templates/splunk_cluster_forwarder_outputs_outputs_amer.j2"
+    dest: /opt/splunk/etc/apps/splunk_cluster_forwarder_outputs/local/outputs.conf
+    owner: splunk
+    group: splunk
+
+- name: Copying AMER Forwarder Server Config
+  template:
+    src: "{{playbook_dir}}/roles/splunk_amer_nonindexer/templates/splunk_cluster_forwarder_outputs_server_amer.j2"
+    dest: /opt/splunk/etc/apps/splunk_cluster_forwarder_outputs/local/server.conf
+    owner: splunk
+    group: splunk
+
+- name: Copying AMER Forwarder Server Config for SearchHead
+  template:
+    src: "{{playbook_dir}}/roles/splunk_amer_nonindexer/templates/splunk_cluster_forwarder_outputs_server_amer_shc.j2"
+    dest: /opt/splunk/etc/apps/splunk_cluster_forwarder_outputs/local/server.conf
+    owner: splunk
+    group: splunk
+  when: (inventory_hostname in groups['splunk-searchhead']) or (inventory_hostname in groups['splunk-searchhead-es'])
+
+- name: Check for Deployer Path
+  stat: path=/opt/splunk/etc/shcluster/apps/splunk_cluster_forwarder_outputs/local/
+  register: p
+
+- name: Copying EMEA Forwarder Outputs Config to Deployer
+  template:
+    src: "{{playbook_dir}}/roles/splunk_amer_nonindexer/templates/splunk_cluster_forwarder_outputs_outputs_amer.j2"
+    dest: /opt/splunk/etc/shcluster/apps/splunk_cluster_forwarder_outputs/local/outputs.conf
+    owner: splunk
+    group: splunk
+  when:
+    - p.stat.exists
+
+- name: Check for Deployer Path
+  stat: path=/opt/splunk/etc/apps/splunk_cluster_forwarder_outputs/default/
+  register: q
+
+- name: Restart Splunkd
+  include_tasks: "{{playbook_dir}}/roles/splunk_common/tasks/splunk_service_restart.yml"

@@ -1,0 +1,219 @@
+---
+- name: Splunk Cluster Common
+  hosts: all
+  vars:
+    - group_file_name1: "{{ inventory_dir }}/group_vars/splunk/splunk.yml"
+  vars_files:
+    - "{{ group_file_name1 }}"
+  pre_tasks:
+    - name: add group variables
+      include_vars: "{{ group_file_name1 }}"
+  roles:
+    - splunk_common
+
+- name: Splunk Master
+  hosts: splunk-master
+  vars:
+    - group_file_name1: "{{ inventory_dir }}/group_vars/splunk/splunk.yml"
+  vars_files:
+    - "{{ group_file_name1 }}"
+  pre_tasks:
+    - name: add group variables
+      include_vars: "{{ group_file_name1 }}"
+  roles:
+    - splunk_master
+
+- name: Splunk EMEA Indexers
+  hosts: splunk-emea-indexers
+  vars:
+    - group_file_name1: "{{ inventory_dir }}/group_vars/splunk/splunk.yml"
+    - region_number: 1
+  vars_files:
+    - "{{ group_file_name1 }}"
+  pre_tasks:
+    - name: add group variables
+      include_vars: "{{ group_file_name1 }}"
+  roles:
+    - splunk_emea_indexer
+
+- name: Splunk AMERICAS Indexers
+  hosts: splunk-amer-indexers
+  vars:
+    - group_file_name1: "{{ inventory_dir }}/group_vars/splunk/splunk.yml"
+    - region_number: 2
+  vars_files:
+    - "{{ group_file_name1 }}"
+  pre_tasks:
+    - name: add group variables
+      include_vars: "{{ group_file_name1 }}"
+  roles:
+    - splunk_amer_indexer
+
+- name: Splunk Pre SHC Deployer
+  hosts: splunk-deployer
+  vars:
+    - group_file_name1: "{{ inventory_dir }}/group_vars/splunk/splunk.yml"
+  vars_files:
+    - "{{ group_file_name1 }}"
+  pre_tasks:
+    - name: add group variables
+      include_vars: "{{ group_file_name1 }}"
+  roles:
+    - splunk_deployer/pre
+
+- name: Splunk Search Head
+  hosts: splunk-searchhead
+  vars:
+    - group_file_name1: "{{ inventory_dir }}/group_vars/splunk/splunk.yml"
+  vars_files:
+    - "{{ group_file_name1 }}"
+  pre_tasks:
+    - name: add group variables
+      include_vars: "{{ group_file_name1 }}"
+  roles:
+    - splunk_searchhead
+
+- name: Splunk Post SHC Deployer
+  hosts: splunk-deployer
+  vars:
+    - group_file_name1: "{{ inventory_dir }}/group_vars/splunk/splunk.yml"
+  vars_files:
+    - "{{ group_file_name1 }}"
+  pre_tasks:
+    - name: add group variables
+      include_vars: "{{ group_file_name1 }}"
+  roles:
+    - splunk_deployer/post
+
+- name: Splunk Pre ES SHC Deployer
+  hosts: splunk-deployer-es
+  vars:
+    - group_file_name1: "{{ inventory_dir }}/group_vars/splunk/splunk.yml"
+  vars_files:
+    - "{{ group_file_name1 }}"
+  pre_tasks:
+    - name: add group variables
+      include_vars: "{{ group_file_name1 }}"
+  roles:
+    - splunk_deployer_es/pre
+
+- name: Splunk Search Head for ES
+  hosts: splunk-searchhead-es
+  vars:
+    - group_file_name1: "{{ inventory_dir }}/group_vars/splunk/splunk.yml"
+  vars_files:
+    - "{{ group_file_name1 }}"
+  pre_tasks:
+    - name: add group variables
+      include_vars: "{{ group_file_name1 }}"
+  roles:
+    - splunk_searchhead_es
+
+- name: Splunk Post ES SHC Deployer
+  hosts: splunk-deployer-es
+  vars:
+    - group_file_name1: "{{ inventory_dir }}/group_vars/splunk/splunk.yml"
+  vars_files:
+    - "{{ group_file_name1 }}"
+  pre_tasks:
+    - name: add group variables
+      include_vars: "{{ group_file_name1 }}"
+  roles:
+    - splunk_deployer_es/post
+
+- name: Splunk SSH
+  hosts: splunk-streamsearchhead
+  vars:
+    - group_file_name1: "{{ inventory_dir }}/group_vars/splunk/splunk.yml"
+  vars_files:
+    - "{{ group_file_name1 }}"
+  pre_tasks:
+    - name: add group variables
+      include_vars: "{{ group_file_name1 }}"
+  roles:
+    - splunk_stream_searchhead
+
+- name: Splunk Staging
+  hosts: splunk-staging
+  vars:
+    - group_file_name1: "{{ inventory_dir }}/group_vars/splunk/splunk.yml"
+  vars_files:
+    - "{{ group_file_name1 }}"
+  pre_tasks:
+    - name: add group variables
+      include_vars: "{{ group_file_name1 }}"
+  roles:
+    - splunk_staging
+
+- name: Splunk Deployment
+  hosts: splunk-deployment
+  vars:
+    - group_file_name1: "{{ inventory_dir }}/group_vars/splunk/splunk.yml"
+  vars_files:
+    - "{{ group_file_name1 }}"
+  pre_tasks:
+    - name: add group variables
+      include_vars: "{{ group_file_name1 }}"
+  roles:
+    - splunk_deployment
+
+- name: Splunk EMEA Non Indexers
+  hosts: splunk-emea-nonindexers
+  vars:
+    - group_file_name1: "{{ inventory_dir }}/group_vars/splunk/splunk.yml"
+  vars_files:
+    - "{{ group_file_name1 }}"
+  pre_tasks:
+    - name: add group variables
+      include_vars: "{{ group_file_name1 }}"
+  roles:
+    - splunk_emea_nonindexer
+
+- name: Splunk AMER Non Indexers
+  hosts: splunk-amer-nonindexers
+  vars:
+    - group_file_name1: "{{ inventory_dir }}/group_vars/splunk/splunk.yml"
+  vars_files:
+    - "{{ group_file_name1 }}"
+  pre_tasks:
+    - name: add group variables
+      include_vars: "{{ group_file_name1 }}"
+  roles:
+    - splunk_amer_nonindexer
+
+ name: Splunk HFW
+  hosts: splunk-heavyforwarders
+  vars:
+    - group_file_name1: "{{ inventory_dir }}/group_vars/splunk/splunk.yml"
+  vars_files:
+    - "{{ group_file_name1 }}"
+  pre_tasks:
+    - name: add group variables
+      include_vars: "{{ group_file_name1 }}"
+  roles:
+    - splunk_heavy_forwarders
+
+- name: Splunk add License Slaves
+  hosts: splunk-deployer:splunk-deployer-es:splunk-master:splunk-deployment
+  vars:
+    - group_file_name1: "{{ inventory_dir }}/group_vars/splunk/splunk.yml"
+  vars_files:
+    - "{{ group_file_name1 }}"
+  pre_tasks:
+    - name: add group variables
+      include_vars: "{{ group_file_name1 }}"
+  roles:
+    - role: splunk_license
+
+- name: Splunk Monitor
+  hosts: splunk-license
+  vars:
+    - group_file_name1: "{{ inventory_dir }}/group_vars/splunk/splunk.yml"
+  vars_files:
+    - "{{ group_file_name1 }}"
+  pre_tasks:
+    - name: add group variables
+      include_vars: "{{ group_file_name1 }}"
+  roles:
+    - splunk_monitor
+...

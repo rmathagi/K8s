@@ -1,0 +1,36 @@
+---
+- name: Copying SearchHead Apps
+  copy:
+    src: "{{playbook_dir}}/roles/splunk_deployer_es/post/files/"
+    dest: /opt/splunk/etc/shcluster/apps
+    owner: splunk
+    group: splunk
+    mode: '0644'
+
+- name: Copying Search Base Config
+  template:
+    src: "{{playbook_dir}}/roles/splunk_deployer_es/post/templates/splunk_cluster_search_base_server.j2"
+    dest: /opt/splunk/etc/shcluster/apps/splunk_cluster_search_base/local/server.conf
+    owner: splunk
+    group: splunk
+
+- name: Copying License Config
+  template:
+    src: "{{playbook_dir}}/roles/splunk_common/templates/splunk_all_license_server.j2"
+    dest: /opt/splunk/etc/shcluster/apps/splunk_all_license/local/server.conf
+    owner: splunk
+    group: splunk
+
+- name: Restart Splunkd
+  include_tasks: "{{playbook_dir}}/roles/splunk_common/tasks/splunk_service_restart.yml"
+
+- name: Apply shcluster bundle
+  command: "{{ splunk.exec }} apply shcluster-bundle -target {{ shc.cert_prefix }}://{{ shc.es_shc_captain }}:{{ shc.svc_port }} -auth {{ common.splunk_admin_user }}:{{ common.splunk_admin_pass }} --answer-yes"
+  become: yes
+  become_user: "{{ splunk.user }}"
+  register: shcluster_bundle
+  until: shcluster_bundle.rc == 0 or "Found zero deployable apps" in shcluster_bundle.stderr
+  changed_when: shcluster_bundle.rc == 0
+  failed_when: shcluster_bundle.rc != 0 and "Found zero deployable apps" not in shcluster_bundle.stderr
+  retries: "{{ shc.retry_num }}"
+  delay: 3
